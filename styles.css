@@ -97,6 +97,28 @@ form {
   gap: 10px;
 }
 
+.date-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.date-note {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.date-picker.hidden {
+  display: none;
+}
+
+.form-ghost {
+  padding: 9px 14px;
+  font-size: 0.82rem;
+}
+
 input, textarea {
   width: 100%;
   font-family: inherit;
@@ -312,6 +334,26 @@ button.primary:active {
 }
 
 .day-content.open { display: block; }
+
+.history-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.history-page-info {
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+  flex: 1;
+}
+
+.history-pagination .ghost[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
 
 /* ---------- Stan pusty ---------- */
 .empty {

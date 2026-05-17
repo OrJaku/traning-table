@@ -23,12 +23,19 @@
 
   <section class="card">
     <form id="exercise-form" autocomplete="off">
+      <div class="date-row">
+        <button type="button" class="ghost form-ghost" id="toggle-date-btn">Zmień datę</button>
+        <p class="date-note" id="selected-date-label">Data wpisu: dzisiaj</p>
+      </div>
+      <div class="date-picker hidden" id="date-picker-wrap">
+        <input type="date" name="entryDate" id="entry-date">
+      </div>
       <div class="segmented" role="radiogroup" aria-label="Ćwiczenie">
         <button type="button" class="seg-btn" data-ex="Pompki" role="radio">Pompki</button>
         <button type="button" class="seg-btn" data-ex="Przysiady" role="radio">Przysiady</button>
       </div>
       <input name="reps" placeholder="Liczba powtórzeń" inputmode="numeric" required>
-          <input name="customExercise" placeholder="Inne aktywności, np. siłownia">
+      <input name="customExercise" placeholder="Inne aktywności, np. siłownia">
       <button class="primary" type="submit">Dodaj</button>
     </form>
   </section>
@@ -38,6 +45,7 @@
 
   <h2>historia</h2>
   <div id="history-list"></div>
+  <div id="history-pagination"></div>
 
   <footer>
     <button class="ghost" id="import-btn">Importuj CSV</button>

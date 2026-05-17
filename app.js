@@ -56,11 +56,20 @@ function parseDateDDMMYYYY(s) {
   return `${y}-${mm}-${dd}`;
 }
 
+function clampEntryDate(iso) {
+  const date = String(iso || '').trim();
+  const today = todayKey();
+  if (!date) return today;
+  return date > today ? today : date;
+}
+
 
 // ============================================================
 // 3. Renderowanie wpisów i widoku
 // ============================================================
+const HISTORY_PAGE_SIZE = 25;
 let editingKey = null; // format: "day:idx" — który wpis jest aktualnie edytowany
+let historyPage = 0;
 
 const entryHTML = (e, day, idx) => {
   const isToday = day === todayKey();
@@ -117,10 +126,14 @@ function render() {
     .filter(day => day < today)
     .sort()
     .reverse();
+  const totalHistoryPages = Math.max(1, Math.ceil(otherDays.length / HISTORY_PAGE_SIZE));
+  historyPage = Math.min(historyPage, totalHistoryPages - 1);
+  const pageStart = historyPage * HISTORY_PAGE_SIZE;
+  const visibleDays = otherDays.slice(pageStart, pageStart + HISTORY_PAGE_SIZE);
   const historyList = document.getElementById('history-list');
   historyList.innerHTML = otherDays.length === 0
     ? '<div class="empty">Brak wcześniejszych wpisów.</div>'
-    : otherDays.map(day => {
+    : visibleDays.map(day => {
         const entries = data[day];
         return `
           <div class="day-group">
@@ -136,7 +149,18 @@ function render() {
         `;
       }).join('');
 
+  const historyPagination = document.getElementById('history-pagination');
+  historyPagination.className = 'history-pagination';
+  historyPagination.innerHTML = otherDays.length <= HISTORY_PAGE_SIZE
+    ? ''
+    : `
+        <button class="ghost" id="history-prev-btn" type="button" ${historyPage === 0 ? 'disabled' : ''}>Poprzednie 25</button>
+        <div class="history-page-info">Strona ${historyPage + 1} z ${totalHistoryPages}</div>
+        <button class="ghost" id="history-next-btn" type="button" ${historyPage >= totalHistoryPages - 1 ? 'disabled' : ''}>Następne 25</button>
+      `;
+
   attachEntryEventHandlers();
+  attachHistoryPaginationHandlers(totalHistoryPages);
 }
 
 
@@ -217,13 +241,48 @@ function attachEntryEventHandlers() {
   });
 }
 
+function attachHistoryPaginationHandlers(totalHistoryPages) {
+  const prevBtn = document.getElementById('history-prev-btn');
+  const nextBtn = document.getElementById('history-next-btn');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (historyPage > 0) {
+        historyPage--;
+        render();
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      if (historyPage < totalHistoryPages - 1) {
+        historyPage++;
+        render();
+      }
+    });
+  }
+}
+
 
 // ============================================================
 // 5. Przełącznik ćwiczenia (pamięta ostatni wybór)
 // ============================================================
+const entryDateInput = document.getElementById('entry-date');
+const datePickerWrap = document.getElementById('date-picker-wrap');
+const toggleDateBtn = document.getElementById('toggle-date-btn');
+const selectedDateLabel = document.getElementById('selected-date-label');
 const customExerciseInput = document.querySelector('[name="customExercise"]');
 const segBtns = document.querySelectorAll('.seg-btn');
 let selectedExercise = localStorage.getItem(LAST_EX_KEY) || 'Pompki';
+
+function updateSelectedDateLabel() {
+  const selectedDate = clampEntryDate(entryDateInput.value);
+  entryDateInput.value = selectedDate;
+  selectedDateLabel.textContent = selectedDate === todayKey()
+    ? 'Data wpisu: dzisiaj'
+    : `Data wpisu: ${formatDate(selectedDate)}`;
+}
 
 function updateSegmented() {
   const hasCustomExercise = customExerciseInput.value.trim() !== '';
@@ -245,6 +304,12 @@ segBtns.forEach(b => {
 
 customExerciseInput.addEventListener('input', updateSegmented);
 
+toggleDateBtn.addEventListener('click', () => {
+  datePickerWrap.classList.toggle('hidden');
+});
+
+entryDateInput.addEventListener('input', updateSelectedDateLabel);
+
 
 // ============================================================
 // 6. Formularz — dodawanie nowych wpisów
@@ -252,6 +317,7 @@ customExerciseInput.addEventListener('input', updateSegmented);
 document.getElementById('exercise-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
+  const entryDate = clampEntryDate(fd.get('entryDate'));
   const customExercise = (fd.get('customExercise') || '').trim();
   const reps = (fd.get('reps') || '').trim();
   const exerciseName = customExercise || selectedExercise;
@@ -267,12 +333,15 @@ document.getElementById('exercise-form').addEventListener('submit', (e) => {
   };
 
   const data = load();
-  const day = todayKey();
+  const day = entryDate;
   if (!data[day]) data[day] = [];
   data[day].push(entry);
   save(data);
 
   e.target.reset();
+  entryDateInput.value = todayKey();
+  entryDateInput.max = todayKey();
+  updateSelectedDateLabel();
   updateSegmented();
   render();
   document.querySelector('[name="reps"]').focus();
@@ -382,5 +451,8 @@ document.getElementById('import-file').addEventListener('change', async (e) => {
 // ============================================================
 // 9. Inicjalizacja
 // ============================================================
+entryDateInput.value = todayKey();
+entryDateInput.max = todayKey();
+updateSelectedDateLabel();
 updateSegmented();
 render();
