@@ -183,6 +183,10 @@ textarea {
 
 .seg-btn:not(.active):active { background: var(--border); }
 
+.hidden {
+  display: none;
+}
+
 /* ---------- Przycisk główny ---------- */
 button.primary {
   background: var(--ink);
@@ -310,9 +314,10 @@ button.primary:active {
 .day-group { margin-bottom: 8px; }
 
 .day-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
   align-items: baseline;
+  column-gap: 12px;
   padding: 14px 6px;
   cursor: pointer;
   border-bottom: 1px solid var(--border);
@@ -320,24 +325,33 @@ button.primary:active {
   user-select: none;
 }
 
-.day-header-date { font-size: 0.95rem; }
+.day-header-date {
+  font-size: 0.95rem;
+  min-width: 0;
+}
 
 .day-summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: 84px 64px;
   align-items: baseline;
   gap: 10px;
+  justify-content: end;
+  width: 158px;
+  white-space: nowrap;
 }
 
 .reps-total {
   color: var(--ink);
   font-size: 0.88rem;
   letter-spacing: 0.01em;
+  text-align: right;
 }
 
 .day-header .count {
   font-size: 0.78rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-align: right;
 }
 
 .day-content {
@@ -346,6 +360,36 @@ button.primary:active {
 }
 
 .day-content.open { display: block; }
+
+.history-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  margin-bottom: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.history-tab {
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  padding: 11px 8px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 500;
+  font-style: italic;
+  font-variation-settings: 'opsz' 144;
+  font-size: 1rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.history-tab.active {
+  background: var(--ink);
+  color: var(--bg);
+}
 
 .history-pagination {
   display: flex;
@@ -365,6 +409,50 @@ button.primary:active {
 .history-pagination .ghost[disabled] {
   opacity: 0.45;
   cursor: default;
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.chart-caption {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-bottom: 12px;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart-bar {
+  fill: var(--accent);
+}
+
+.chart-bar.zero {
+  fill: var(--border);
+}
+
+.chart-label {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.chart-value {
+  fill: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 /* ---------- Stan pusty ---------- */

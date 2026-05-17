@@ -30,6 +30,11 @@ const formatDate = (iso) => {
   return d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
 };
 
+const formatShortDate = (iso) => {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
+};
+
 const escapeHtml = (s) =>
   String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -69,6 +74,12 @@ function clampEntryDate(iso) {
   return date > today ? today : date;
 }
 
+function shiftDate(iso, days) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 
 // ============================================================
 // 3. Renderowanie wpisów i widoku
@@ -76,6 +87,7 @@ function clampEntryDate(iso) {
 const HISTORY_PAGE_SIZE = 25;
 let editingKey = null; // format: "day:idx" — który wpis jest aktualnie edytowany
 let historyPage = 0;
+let historyView = 'list';
 
 const entryHTML = (e, day, idx) => {
   const isToday = day === todayKey();
@@ -127,11 +139,20 @@ function render() {
     ? '<div class="empty">Jeszcze nic dzisiaj.</div>'
     : todayEntries.map((e, i) => entryHTML(e, today, i)).join('');
 
-  // Historia (poprzednie dni, rozwijane)
   const otherDays = Object.keys(data)
     .filter(day => day < today)
     .sort()
     .reverse();
+  renderHistoryList(data, otherDays);
+  renderHistoryChart(data, today);
+  updateHistoryView();
+
+  attachEntryEventHandlers();
+  attachHistoryPaginationHandlers(Math.max(1, Math.ceil(otherDays.length / HISTORY_PAGE_SIZE)));
+  attachHistoryViewHandlers();
+}
+
+function renderHistoryList(data, otherDays) {
   const totalHistoryPages = Math.max(1, Math.ceil(otherDays.length / HISTORY_PAGE_SIZE));
   historyPage = Math.min(historyPage, totalHistoryPages - 1);
   const pageStart = historyPage * HISTORY_PAGE_SIZE;
@@ -147,7 +168,7 @@ function render() {
             <div class="day-header" data-day="${day}">
               <span class="day-header-date">${formatDate(day)}</span>
               <span class="day-summary">
-                ${repsTotal ? `<span class="reps-total">${repsTotal} powt.</span>` : ''}
+                <span class="reps-total">${repsTotal ? `${repsTotal}` : ''}</span>
                 <span class="count">${entries.length} ${pluralize(entries.length)}</span>
               </span>
             </div>
@@ -168,9 +189,60 @@ function render() {
         <div class="history-page-info">Strona ${historyPage + 1} z ${totalHistoryPages}</div>
         <button class="ghost" id="history-next-btn" type="button" ${historyPage >= totalHistoryPages - 1 ? 'disabled' : ''}>Następne 25</button>
       `;
+}
 
-  attachEntryEventHandlers();
-  attachHistoryPaginationHandlers(totalHistoryPages);
+function renderHistoryChart(data, today) {
+  const points = [];
+  for (let i = 14; i >= 0; i--) {
+    const day = shiftDate(today, -i);
+    points.push({
+      day,
+      total: sumReps(data[day] || [])
+    });
+  }
+
+  const maxTotal = Math.max(...points.map(point => point.total), 1);
+  const chartHeight = 180;
+  const bottomY = 190;
+  const stepX = 22;
+  const startX = 26;
+
+  const bars = points.map((point, index) => {
+    const height = Math.round((point.total / maxTotal) * chartHeight);
+    const x = startX + index * stepX;
+    const y = bottomY - height;
+    const label = index % 2 === 0 ? formatShortDate(point.day) : '';
+    return `
+      <rect class="chart-bar ${point.total === 0 ? 'zero' : ''}" x="${x}" y="${y}" width="14" height="${height || 2}" rx="4"></rect>
+      ${point.total > 0 ? `<text class="chart-value" x="${x + 7}" y="${Math.max(14, y - 6)}" text-anchor="middle">${point.total}</text>` : ''}
+      ${label ? `<text class="chart-label" x="${x + 7}" y="214" text-anchor="middle">${label}</text>` : ''}
+    `;
+  }).join('');
+
+  const historyChart = document.getElementById('history-chart');
+  historyChart.innerHTML = `
+    <p class="chart-caption">Suma powtórzeń z ostatnich 15 dni, łącznie z dzisiaj.</p>
+    <svg class="chart-svg" viewBox="0 0 360 220" role="img" aria-label="Wykres liczby powtórzeń z ostatnich 15 dni">
+      <line class="chart-grid" x1="18" y1="${bottomY}" x2="350" y2="${bottomY}"></line>
+      <line class="chart-grid" x1="18" y1="10" x2="18" y2="${bottomY}"></line>
+      ${bars}
+    </svg>
+  `;
+}
+
+function updateHistoryView() {
+  const listView = document.getElementById('history-list-view');
+  const chartView = document.getElementById('history-chart-view');
+  const tabs = document.querySelectorAll('.history-tab');
+
+  listView.classList.toggle('hidden', historyView !== 'list');
+  chartView.classList.toggle('hidden', historyView !== 'chart');
+
+  tabs.forEach(tab => {
+    const isActive = tab.dataset.view === historyView;
+    tab.classList.toggle('active', isActive);
+    tab.setAttribute('aria-selected', isActive);
+  });
 }
 
 
@@ -277,6 +349,15 @@ function attachHistoryPaginationHandlers(totalHistoryPages) {
   }
 }
 
+function attachHistoryViewHandlers() {
+  document.querySelectorAll('.history-tab').forEach(tab => {
+    tab.onclick = () => {
+      historyView = tab.dataset.view;
+      updateHistoryView();
+    };
+  });
+}
+
 
 // ============================================================
 // 5. Przełącznik ćwiczenia (pamięta ostatni wybór)
@@ -286,6 +367,7 @@ const datePickerWrap = document.getElementById('date-picker-wrap');
 const toggleDateBtn = document.getElementById('toggle-date-btn');
 const selectedDateLabel = document.getElementById('selected-date-label');
 const customExerciseInput = document.querySelector('[name="customExercise"]');
+const repsInput = document.getElementById('reps-input');
 const segBtns = document.querySelectorAll('.seg-btn');
 let selectedExercise = localStorage.getItem(LAST_EX_KEY) || 'Pompki';
 
@@ -299,6 +381,7 @@ function updateSelectedDateLabel() {
 
 function updateSegmented() {
   const hasCustomExercise = customExerciseInput.value.trim() !== '';
+  repsInput.required = !hasCustomExercise;
   segBtns.forEach(b => {
     const isActive = !hasCustomExercise && b.dataset.ex === selectedExercise;
     b.classList.toggle('active', isActive);
@@ -334,7 +417,7 @@ document.getElementById('exercise-form').addEventListener('submit', (e) => {
   const customExercise = (fd.get('customExercise') || '').trim();
   const reps = (fd.get('reps') || '').trim();
   const exerciseName = customExercise || selectedExercise;
-  if (!reps || !exerciseName) return;
+  if (!exerciseName || (!customExercise && !reps)) return;
 
   const entry = {
     name: exerciseName,

@@ -34,7 +34,7 @@
         <button type="button" class="seg-btn" data-ex="Pompki" role="radio">Pompki</button>
         <button type="button" class="seg-btn" data-ex="Przysiady" role="radio">Przysiady</button>
       </div>
-      <input name="reps" placeholder="Liczba powtórzeń" inputmode="numeric" required>
+      <input name="reps" id="reps-input" placeholder="Liczba powtórzeń" inputmode="numeric" required>
       <input name="customExercise" placeholder="Inne aktywności, np. siłownia">
       <button class="primary" type="submit">Dodaj</button>
     </form>
@@ -44,8 +44,17 @@
   <div id="today-list"></div>
 
   <h2>historia</h2>
-  <div id="history-list"></div>
-  <div id="history-pagination"></div>
+  <div class="history-tabs" role="tablist" aria-label="Widok historii">
+    <button type="button" class="history-tab active" id="history-tab-list" data-view="list" role="tab" aria-selected="true">Lista</button>
+    <button type="button" class="history-tab" id="history-tab-chart" data-view="chart" role="tab" aria-selected="false">Wykres 15 dni</button>
+  </div>
+  <section id="history-list-view">
+    <div id="history-list"></div>
+    <div id="history-pagination"></div>
+  </section>
+  <section id="history-chart-view" class="hidden">
+    <div class="chart-card" id="history-chart"></div>
+  </section>
 
   <footer>
     <button class="ghost" id="import-btn">Importuj CSV</button>
