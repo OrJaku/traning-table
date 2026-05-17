@@ -47,6 +47,12 @@ const seriaWord = (n) => {
   return `${num} serii`;
 };
 
+const sumReps = (entries) =>
+  entries.reduce((total, entry) => {
+    const reps = parseInt(entry.reps, 10);
+    return Number.isNaN(reps) ? total : total + reps;
+  }, 0);
+
 function parseDateDDMMYYYY(s) {
   const m = String(s).trim().match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})$/);
   if (!m) return null;
@@ -135,11 +141,15 @@ function render() {
     ? '<div class="empty">Brak wcześniejszych wpisów.</div>'
     : visibleDays.map(day => {
         const entries = data[day];
+        const repsTotal = sumReps(entries);
         return `
           <div class="day-group">
             <div class="day-header" data-day="${day}">
               <span class="day-header-date">${formatDate(day)}</span>
-              <span class="count">${entries.length} ${pluralize(entries.length)}</span>
+              <span class="day-summary">
+                ${repsTotal ? `<span class="reps-total">${repsTotal} powt.</span>` : ''}
+                <span class="count">${entries.length} ${pluralize(entries.length)}</span>
+              </span>
             </div>
             <div class="day-content" data-day-content="${day}">
               <div style="height:8px"></div>
