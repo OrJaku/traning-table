@@ -218,13 +218,16 @@ function attachEntryEventHandlers() {
 // ============================================================
 // 5. Przełącznik ćwiczenia (pamięta ostatni wybór)
 // ============================================================
+const customExerciseInput = document.querySelector('[name="customExercise"]');
 const segBtns = document.querySelectorAll('.seg-btn');
 let selectedExercise = localStorage.getItem(LAST_EX_KEY) || 'Pompki';
 
 function updateSegmented() {
+  const hasCustomExercise = customExerciseInput.value.trim() !== '';
   segBtns.forEach(b => {
-    b.classList.toggle('active', b.dataset.ex === selectedExercise);
-    b.setAttribute('aria-checked', b.dataset.ex === selectedExercise);
+    const isActive = !hasCustomExercise && b.dataset.ex === selectedExercise;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-checked', isActive);
   });
 }
 
@@ -232,9 +235,12 @@ segBtns.forEach(b => {
   b.addEventListener('click', () => {
     selectedExercise = b.dataset.ex;
     localStorage.setItem(LAST_EX_KEY, selectedExercise);
+    customExerciseInput.value = '';
     updateSegmented();
   });
 });
+
+customExerciseInput.addEventListener('input', updateSegmented);
 
 
 // ============================================================
@@ -243,11 +249,13 @@ segBtns.forEach(b => {
 document.getElementById('exercise-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
+  const customExercise = (fd.get('customExercise') || '').trim();
   const reps = (fd.get('reps') || '').trim();
-  if (!reps) return;
+  const exerciseName = customExercise || selectedExercise;
+  if (!reps || !exerciseName) return;
 
   const entry = {
-    name: selectedExercise,
+    name: exerciseName,
     sets: '',
     reps: reps,
     weight: '',
@@ -262,6 +270,7 @@ document.getElementById('exercise-form').addEventListener('submit', (e) => {
   save(data);
 
   e.target.reset();
+  updateSegmented();
   render();
   document.querySelector('[name="reps"]').focus();
 });
