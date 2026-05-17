@@ -113,7 +113,10 @@ function render() {
     : todayEntries.map((e, i) => entryHTML(e, today, i)).join('');
 
   // Historia (poprzednie dni, rozwijane)
-  const otherDays = Object.keys(data).filter(k => k !== today).sort().reverse();
+  const otherDays = Object.keys(data)
+    .filter(day => day < today)
+    .sort()
+    .reverse();
   const historyList = document.getElementById('history-list');
   historyList.innerHTML = otherDays.length === 0
     ? '<div class="empty">Brak wcześniejszych wpisów.</div>'
