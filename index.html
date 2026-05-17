@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1612" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Trening">
+  <link rel="apple-touch-icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect width="180" height="180" rx="40" fill="%23b8533a"/><text x="50%25" y="64%25" text-anchor="middle" font-family="Georgia,serif" font-size="110" font-style="italic" fill="%23fdfaf3">T</text></svg>'>
+  <title>Dziennik treningu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Dziennik <em>treningu</em></h1>
+    <p class="date" id="today-date"></p>
+  </header>
+
+  <section class="card">
+    <form id="exercise-form" autocomplete="off">
+      <div class="segmented" role="radiogroup" aria-label="Ćwiczenie">
+        <button type="button" class="seg-btn" data-ex="Pompki" role="radio">Pompki</button>
+        <button type="button" class="seg-btn" data-ex="Przysiady" role="radio">Przysiady</button>
+      </div>
+      <input name="reps" placeholder="Liczba powtórzeń" inputmode="numeric" required>
+      <button class="primary" type="submit">Dodaj</button>
+    </form>
+  </section>
+
+  <h2>dzisiaj</h2>
+  <div id="today-list"></div>
+
+  <h2>historia</h2>
+  <div id="history-list"></div>
+
+  <footer>
+    <button class="ghost" id="import-btn">Importuj CSV</button>
+    <button class="ghost" id="export-btn">Eksportuj (JSON)</button>
+    <input type="file" id="import-file" accept=".csv,text/csv" hidden>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

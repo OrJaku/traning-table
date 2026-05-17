@@ -1,0 +1,350 @@
+/* ============================================================
+   Dziennik treningu — style
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- Motyw: kolory ---------- */
+:root {
+  --bg: #f4efe6;
+  --card: #fdfaf3;
+  --ink: #1c1814;
+  --muted: #8a7a68;
+  --accent: #b8533a;
+  --border: #e6dccc;
+  --shadow: 0 1px 2px rgba(28, 24, 20, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1612;
+    --card: #221c17;
+    --ink: #f4efe6;
+    --muted: #9c8d7c;
+    --accent: #d97757;
+    --border: #322a22;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* ---------- Układ strony ---------- */
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 100vh;
+  max-width: 580px;
+  margin: 0 auto;
+  padding: max(20px, env(safe-area-inset-top)) 20px max(60px, env(safe-area-inset-bottom));
+}
+
+header { margin: 28px 0 32px; }
+
+/* ---------- Typografia ---------- */
+h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2.2rem, 8vw, 2.8rem);
+  font-variation-settings: 'opsz' 144;
+  letter-spacing: -0.025em;
+  line-height: 1.0;
+  margin-bottom: 10px;
+}
+
+h1 em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: 1.4rem;
+  font-variation-settings: 'opsz' 144;
+  margin: 36px 0 14px;
+  letter-spacing: -0.01em;
+}
+
+.date {
+  color: var(--muted);
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Karta i formularz ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+input, textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 14px;
+  color: var(--ink);
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+textarea {
+  resize: none;
+  min-height: 44px;
+  line-height: 1.4;
+}
+
+/* ---------- Przełącznik ćwiczenia (segmented) ---------- */
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.seg-btn {
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  padding: 11px 8px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 500;
+  font-style: italic;
+  font-variation-settings: 'opsz' 144;
+  font-size: 1.05rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.seg-btn.active {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.seg-btn:not(.active):active { background: var(--border); }
+
+/* ---------- Przycisk główny ---------- */
+button.primary {
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+  margin-top: 4px;
+}
+
+button.primary:active {
+  transform: scale(0.985);
+  background: var(--accent);
+}
+
+/* ---------- Wpisy ---------- */
+.entry {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 44px 14px 16px;
+  margin-bottom: 8px;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+.entry-name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.12rem;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+}
+
+.entry-stats {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-feature-settings: 'tnum';
+  margin-top: 4px;
+}
+
+.entry-notes {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-style: italic;
+  margin-top: 6px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 400;
+}
+
+/* ---------- Akcje na wpisie (edytuj / usuń) ---------- */
+.entry-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 2px;
+}
+
+.entry-action {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px 10px;
+  font-size: 1.05rem;
+  line-height: 1;
+  border-radius: 8px;
+  opacity: 0.55;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.entry-action.delete { font-size: 1.3rem; }
+.entry-action:active { color: var(--accent); opacity: 1; }
+
+/* ---------- Tryb edycji wpisu ---------- */
+.entry.editing { padding-right: 16px; }
+.entry.editing .entry-name { margin-bottom: 8px; }
+
+.edit-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 16px;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--ink);
+  margin-top: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.edit-input:focus { outline: none; }
+
+.edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.edit-save, .edit-cancel {
+  flex: 1;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+}
+
+.edit-save { background: var(--ink); color: var(--bg); }
+.edit-cancel { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.edit-save:active { background: var(--accent); }
+.edit-cancel:active { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- Historia (dni rozwijane) ---------- */
+.day-group { margin-bottom: 8px; }
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14px 6px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  user-select: none;
+}
+
+.day-header-date { font-size: 0.95rem; }
+
+.day-header .count {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.day-content {
+  display: none;
+  padding-top: 10px;
+}
+
+.day-content.open { display: block; }
+
+/* ---------- Stan pusty ---------- */
+.empty {
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  padding: 28px 16px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 0.98rem;
+}
+
+/* ---------- Stopka ---------- */
+footer {
+  margin-top: 44px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+
+button.ghost:active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
