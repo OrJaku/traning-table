@@ -172,6 +172,9 @@ function attachEntryEventHandlers() {
   document.querySelectorAll('.entry-action.delete').forEach(btn => {
     btn.addEventListener('click', () => {
       const day = btn.dataset.day, idx = parseInt(btn.dataset.idx);
+      if (day < todayKey() && !window.confirm(`Usunąć historyczny wpis z dnia ${formatDate(day)}?`)) {
+        return;
+      }
       const data = load();
       if (data[day]) {
         data[day].splice(idx, 1);
