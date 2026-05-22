@@ -153,7 +153,7 @@ textarea {
 /* ---------- Przełącznik ćwiczenia (segmented) ---------- */
 .segmented {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
   padding: 4px;
   background: var(--bg);
@@ -185,6 +185,33 @@ textarea {
 
 .hidden {
   display: none;
+}
+
+.reps-control {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.reps-control #reps-input {
+  text-align: center;
+}
+
+.step-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--ink);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.step-btn:active {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* ---------- Przycisk główny ---------- */
@@ -272,6 +299,13 @@ button.primary:active {
 .entry.editing { padding-right: 16px; }
 .entry.editing .entry-name { margin-bottom: 8px; }
 
+.edit-reps-control {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  gap: 8px;
+  align-items: stretch;
+}
+
 .edit-input {
   width: 100%;
   font-family: inherit;
@@ -284,6 +318,7 @@ button.primary:active {
   margin-top: 4px;
   -webkit-appearance: none;
   appearance: none;
+  text-align: center;
 }
 
 .edit-input:focus { outline: none; }
@@ -440,8 +475,16 @@ button.primary:active {
   fill: var(--accent);
 }
 
+.chart-bar.today {
+  fill: #8f432f;
+}
+
 .chart-bar.zero {
   fill: var(--border);
+}
+
+.chart-bar.today.zero {
+  fill: #b28e80;
 }
 
 .chart-label {

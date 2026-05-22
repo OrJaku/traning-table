@@ -33,9 +33,16 @@
       <div class="segmented" role="radiogroup" aria-label="Ćwiczenie">
         <button type="button" class="seg-btn" data-ex="Pompki" role="radio">Pompki</button>
         <button type="button" class="seg-btn" data-ex="Przysiady" role="radio">Przysiady</button>
+        <button type="button" class="seg-btn" data-ex="Inne" role="radio">Inne</button>
       </div>
-      <input name="reps" id="reps-input" placeholder="Liczba powtórzeń" inputmode="numeric" required>
-      <input name="customExercise" placeholder="Inne aktywności, np. siłownia">
+      <div class="reps-control">
+        <button type="button" class="step-btn" id="reps-minus-btn" aria-label="Odejmij 5">-</button>
+        <input name="reps" id="reps-input" placeholder="Liczba powtórzeń" inputmode="numeric" required>
+        <button type="button" class="step-btn" id="reps-plus-btn" aria-label="Dodaj 5">+</button>
+      </div>
+      <div id="custom-exercise-wrap" class="hidden">
+        <input name="customExercise" id="custom-exercise-input" placeholder="Inne aktywności, np. siłownia">
+      </div>
       <button class="primary" type="submit">Dodaj</button>
     </form>
   </section>

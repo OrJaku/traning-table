@@ -97,9 +97,13 @@ const entryHTML = (e, day, idx) => {
     return `
       <div class="entry editing">
         <div class="entry-name">${escapeHtml(e.name)}</div>
-        <input class="edit-input" type="text" inputmode="numeric"
-               value="${escapeHtml(e.reps)}" data-day="${day}" data-idx="${idx}"
-               aria-label="Liczba powtórzeń">
+        <div class="edit-reps-control">
+          <button class="step-btn edit-step-btn" type="button" data-delta="-5" aria-label="Odejmij 5">-</button>
+          <input class="edit-input" type="text" inputmode="numeric"
+                 value="${escapeHtml(e.reps)}" data-day="${day}" data-idx="${idx}"
+                 aria-label="Liczba powtórzeń">
+          <button class="step-btn edit-step-btn" type="button" data-delta="5" aria-label="Dodaj 5">+</button>
+        </div>
         <div class="edit-actions">
           <button class="edit-cancel" type="button">Anuluj</button>
           <button class="edit-save" type="button" data-day="${day}" data-idx="${idx}">Zapisz</button>
@@ -212,8 +216,11 @@ function renderHistoryChart(data, today) {
     const x = startX + index * stepX;
     const y = bottomY - height;
     const label = index % 2 === 0 ? formatShortDate(point.day) : '';
+    const barClasses = ['chart-bar'];
+    if (point.day === today) barClasses.push('today');
+    if (point.total === 0) barClasses.push('zero');
     return `
-      <rect class="chart-bar ${point.total === 0 ? 'zero' : ''}" x="${x}" y="${y}" width="14" height="${height || 2}" rx="4"></rect>
+      <rect class="${barClasses.join(' ')}" x="${x}" y="${y}" width="14" height="${height || 2}" rx="4"></rect>
       ${point.total > 0 ? `<text class="chart-value" x="${x + 7}" y="${Math.max(14, y - 6)}" text-anchor="middle">${point.total}</text>` : ''}
       ${label ? `<text class="chart-label" x="${x + 7}" y="214" text-anchor="middle">${label}</text>` : ''}
     `;
@@ -317,6 +324,17 @@ function attachEntryEventHandlers() {
     });
   });
 
+  document.querySelectorAll('.edit-step-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.parentElement.querySelector('.edit-input');
+      const delta = parseInt(btn.dataset.delta, 10);
+      const currentValue = parseInt(input.value, 10);
+      const safeValue = Number.isNaN(currentValue) ? 0 : currentValue;
+      input.value = Math.max(0, safeValue + delta);
+      input.focus();
+    });
+  });
+
   // Rozwijanie dni w historii
   document.querySelectorAll('.day-header').forEach(h => {
     h.addEventListener('click', () => {
@@ -366,8 +384,11 @@ const entryDateInput = document.getElementById('entry-date');
 const datePickerWrap = document.getElementById('date-picker-wrap');
 const toggleDateBtn = document.getElementById('toggle-date-btn');
 const selectedDateLabel = document.getElementById('selected-date-label');
-const customExerciseInput = document.querySelector('[name="customExercise"]');
+const customExerciseWrap = document.getElementById('custom-exercise-wrap');
+const customExerciseInput = document.getElementById('custom-exercise-input');
 const repsInput = document.getElementById('reps-input');
+const repsMinusBtn = document.getElementById('reps-minus-btn');
+const repsPlusBtn = document.getElementById('reps-plus-btn');
 const segBtns = document.querySelectorAll('.seg-btn');
 let selectedExercise = localStorage.getItem(LAST_EX_KEY) || 'Pompki';
 
@@ -380,31 +401,40 @@ function updateSelectedDateLabel() {
 }
 
 function updateSegmented() {
-  const hasCustomExercise = customExerciseInput.value.trim() !== '';
-  repsInput.required = !hasCustomExercise;
+  const isCustomExercise = selectedExercise === 'Inne';
+  customExerciseWrap.classList.toggle('hidden', !isCustomExercise);
+  customExerciseInput.required = isCustomExercise;
+  repsInput.required = !isCustomExercise;
   segBtns.forEach(b => {
-    const isActive = !hasCustomExercise && b.dataset.ex === selectedExercise;
+    const isActive = b.dataset.ex === selectedExercise;
     b.classList.toggle('active', isActive);
     b.setAttribute('aria-checked', isActive);
   });
+}
+
+function adjustReps(delta) {
+  const currentValue = parseInt(repsInput.value, 10);
+  const safeValue = Number.isNaN(currentValue) ? 0 : currentValue;
+  repsInput.value = Math.max(0, safeValue + delta);
+  repsInput.focus();
 }
 
 segBtns.forEach(b => {
   b.addEventListener('click', () => {
     selectedExercise = b.dataset.ex;
     localStorage.setItem(LAST_EX_KEY, selectedExercise);
-    customExerciseInput.value = '';
     updateSegmented();
+    if (selectedExercise === 'Inne') customExerciseInput.focus();
   });
 });
-
-customExerciseInput.addEventListener('input', updateSegmented);
 
 toggleDateBtn.addEventListener('click', () => {
   datePickerWrap.classList.toggle('hidden');
 });
 
 entryDateInput.addEventListener('input', updateSelectedDateLabel);
+repsMinusBtn.addEventListener('click', () => adjustReps(-5));
+repsPlusBtn.addEventListener('click', () => adjustReps(5));
 
 
 // ============================================================
@@ -416,8 +446,8 @@ document.getElementById('exercise-form').addEventListener('submit', (e) => {
   const entryDate = clampEntryDate(fd.get('entryDate'));
   const customExercise = (fd.get('customExercise') || '').trim();
   const reps = (fd.get('reps') || '').trim();
-  const exerciseName = customExercise || selectedExercise;
-  if (!exerciseName || (!customExercise && !reps)) return;
+  const exerciseName = selectedExercise === 'Inne' ? customExercise : selectedExercise;
+  if (!exerciseName || (selectedExercise !== 'Inne' && !reps)) return;
 
   const entry = {
     name: exerciseName,
@@ -438,9 +468,11 @@ document.getElementById('exercise-form').addEventListener('submit', (e) => {
   entryDateInput.value = todayKey();
   entryDateInput.max = todayKey();
   updateSelectedDateLabel();
+  if (selectedExercise !== 'Inne') customExerciseInput.value = '';
   updateSegmented();
   render();
-  document.querySelector('[name="reps"]').focus();
+  if (selectedExercise === 'Inne') customExerciseInput.focus();
+  else repsInput.focus();
 });
 
 
