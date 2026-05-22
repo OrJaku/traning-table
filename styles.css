@@ -492,6 +492,11 @@ button.primary:active {
   font-size: 11px;
 }
 
+.chart-label.today {
+  fill: var(--ink);
+  font-weight: 700;
+}
+
 .chart-value {
   fill: var(--ink);
   font-size: 11px;

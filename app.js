@@ -87,7 +87,7 @@ function shiftDate(iso, days) {
 const HISTORY_PAGE_SIZE = 25;
 let editingKey = null; // format: "day:idx" — który wpis jest aktualnie edytowany
 let historyPage = 0;
-let historyView = 'list';
+let historyView = 'chart';
 
 const entryHTML = (e, day, idx) => {
   const isToday = day === todayKey();
@@ -215,14 +215,15 @@ function renderHistoryChart(data, today) {
     const height = Math.round((point.total / maxTotal) * chartHeight);
     const x = startX + index * stepX;
     const y = bottomY - height;
-    const label = index % 2 === 0 ? formatShortDate(point.day) : '';
+    const isToday = point.day === today;
+    const label = isToday ? 'dziś' : (index % 2 === 0 ? formatShortDate(point.day) : '');
     const barClasses = ['chart-bar'];
-    if (point.day === today) barClasses.push('today');
+    if (isToday) barClasses.push('today');
     if (point.total === 0) barClasses.push('zero');
     return `
       <rect class="${barClasses.join(' ')}" x="${x}" y="${y}" width="14" height="${height || 2}" rx="4"></rect>
       ${point.total > 0 ? `<text class="chart-value" x="${x + 7}" y="${Math.max(14, y - 6)}" text-anchor="middle">${point.total}</text>` : ''}
-      ${label ? `<text class="chart-label" x="${x + 7}" y="214" text-anchor="middle">${label}</text>` : ''}
+      ${label ? `<text class="chart-label ${isToday ? 'today' : ''}" x="${x + 7}" y="214" text-anchor="middle">${label}</text>` : ''}
     `;
   }).join('');
 

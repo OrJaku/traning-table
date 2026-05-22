@@ -52,14 +52,14 @@
 
   <h2>historia</h2>
   <div class="history-tabs" role="tablist" aria-label="Widok historii">
-    <button type="button" class="history-tab active" id="history-tab-list" data-view="list" role="tab" aria-selected="true">Lista</button>
-    <button type="button" class="history-tab" id="history-tab-chart" data-view="chart" role="tab" aria-selected="false">Wykres 15 dni</button>
+    <button type="button" class="history-tab" id="history-tab-list" data-view="list" role="tab" aria-selected="false">Lista</button>
+    <button type="button" class="history-tab active" id="history-tab-chart" data-view="chart" role="tab" aria-selected="true">Wykres 15 dni</button>
   </div>
-  <section id="history-list-view">
+  <section id="history-list-view" class="hidden">
     <div id="history-list"></div>
     <div id="history-pagination"></div>
   </section>
-  <section id="history-chart-view" class="hidden">
+  <section id="history-chart-view">
     <div class="chart-card" id="history-chart"></div>
   </section>
 
