@@ -270,6 +270,37 @@ button.primary:active {
   font-weight: 400;
 }
 
+/* ---------- Podsumowanie ---------- */
+.summary-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.summary-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.summary-value {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.summary-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
 /* ---------- Akcje na wpisie (edytuj / usuń) ---------- */
 .entry-actions {
   position: absolute;

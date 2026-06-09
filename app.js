@@ -80,6 +80,14 @@ function shiftDate(iso, days) {
   return d.toISOString().slice(0, 10);
 }
 
+function daysBetweenInclusive(startIso, endIso) {
+  const [startYear, startMonth, startDay] = startIso.split('-').map(Number);
+  const [endYear, endMonth, endDay] = endIso.split('-').map(Number);
+  const start = Date.UTC(startYear, startMonth - 1, startDay);
+  const end = Date.UTC(endYear, endMonth - 1, endDay);
+  return Math.max(1, Math.floor((end - start) / 86400000) + 1);
+}
+
 
 // ============================================================
 // 3. Renderowanie wpisów i widoku
@@ -143,6 +151,8 @@ function render() {
     ? '<div class="empty">Jeszcze nic dzisiaj.</div>'
     : todayEntries.map((e, i) => entryHTML(e, today, i)).join('');
 
+  renderSummary(data, today);
+
   const otherDays = Object.keys(data)
     .filter(day => day < today)
     .sort()
@@ -154,6 +164,27 @@ function render() {
   attachEntryEventHandlers();
   attachHistoryPaginationHandlers(Math.max(1, Math.ceil(otherDays.length / HISTORY_PAGE_SIZE)));
   attachHistoryViewHandlers();
+}
+
+function renderSummary(data, today) {
+  const days = Object.keys(data)
+    .filter(day => day <= today)
+    .sort();
+  const totalReps = days.reduce((total, day) => total + sumReps(data[day] || []), 0);
+  const firstDay = days[0];
+  const dayCount = firstDay ? daysBetweenInclusive(firstDay, today) : 0;
+  const dailyAverage = dayCount ? totalReps / dayCount : 0;
+
+  document.getElementById('summary-card').innerHTML = `
+    <div class="summary-item">
+      <div class="summary-value">${totalReps}</div>
+      <div class="summary-label">łącznie powtórzeń</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value">${dailyAverage.toFixed(1)}</div>
+      <div class="summary-label">średnio dziennie</div>
+    </div>
+  `;
 }
 
 function renderHistoryList(data, otherDays) {
