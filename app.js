@@ -88,6 +88,17 @@ function daysBetweenInclusive(startIso, endIso) {
   return Math.max(1, Math.floor((end - start) / 86400000) + 1);
 }
 
+function startOfWeek(iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day));
+  const weekday = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() - weekday + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+const hasEntries = (data, day) =>
+  Array.isArray(data[day]) && data[day].length > 0;
+
 
 // ============================================================
 // 3. Renderowanie wpisów i widoku
@@ -96,6 +107,7 @@ const HISTORY_PAGE_SIZE = 25;
 let editingKey = null; // format: "day:idx" — który wpis jest aktualnie edytowany
 let historyPage = 0;
 let historyView = 'chart';
+let chartAggregation = 'daily';
 
 const entryHTML = (e, day, idx) => {
   const isToday = day === todayKey();
@@ -164,6 +176,7 @@ function render() {
   attachEntryEventHandlers();
   attachHistoryPaginationHandlers(Math.max(1, Math.ceil(otherDays.length / HISTORY_PAGE_SIZE)));
   attachHistoryViewHandlers();
+  attachChartAggregationHandlers();
 }
 
 function renderSummary(data, today) {
@@ -174,6 +187,10 @@ function renderSummary(data, today) {
   const firstDay = days[0];
   const dayCount = firstDay ? daysBetweenInclusive(firstDay, today) : 0;
   const dailyAverage = dayCount ? totalReps / dayCount : 0;
+  let currentStreak = 0;
+  for (let day = today; hasEntries(data, day); day = shiftDate(day, -1)) {
+    currentStreak++;
+  }
 
   document.getElementById('summary-card').innerHTML = `
     <div class="summary-item">
@@ -183,6 +200,14 @@ function renderSummary(data, today) {
     <div class="summary-item">
       <div class="summary-value">${dailyAverage.toFixed(1)}</div>
       <div class="summary-label">średnio dziennie</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value">${dayCount} dni</div>
+      <div class="summary-label">ćwiczę od</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value">${currentStreak} dni</div>
+      <div class="summary-label">bez przerwy</div>
     </div>
   `;
 }
@@ -227,46 +252,84 @@ function renderHistoryList(data, otherDays) {
 }
 
 function renderHistoryChart(data, today) {
-  const points = [];
-  for (let i = 14; i >= 0; i--) {
-    const day = shiftDate(today, -i);
-    points.push({
-      day,
-      total: sumReps(data[day] || [])
-    });
-  }
-
-  const maxTotal = Math.max(...points.map(point => point.total), 1);
+  const points = chartAggregation === 'weekly'
+    ? buildWeeklyChartPoints(data, today)
+    : buildDailyChartPoints(data, today);
+  const isWeekly = chartAggregation === 'weekly';
+  const caption = isWeekly
+    ? 'Suma powtórzeń z ostatnich 10 tygodni, razem z bieżącym tygodniem.'
+    : 'Suma powtórzeń z ostatnich 15 dni, łącznie z dzisiaj.';
+  const ariaLabel = isWeekly
+    ? 'Wykres liczby powtórzeń z ostatnich 10 tygodni'
+    : 'Wykres liczby powtórzeń z ostatnich 15 dni';
   const chartHeight = 180;
   const bottomY = 190;
-  const stepX = 22;
-  const startX = 26;
+  const stepX = isWeekly ? 32 : 22;
+  const barWidth = isWeekly ? 22 : 14;
+  const startX = isWeekly ? 26 : 26;
+  const maxTotal = Math.max(...points.map(point => point.total), 1);
 
   const bars = points.map((point, index) => {
     const height = Math.round((point.total / maxTotal) * chartHeight);
     const x = startX + index * stepX;
     const y = bottomY - height;
-    const isToday = point.day === today;
-    const label = isToday ? 'dziś' : (index % 2 === 0 ? formatShortDate(point.day) : '');
     const barClasses = ['chart-bar'];
-    if (isToday) barClasses.push('today');
+    if (point.current) barClasses.push('today');
     if (point.total === 0) barClasses.push('zero');
     return `
-      <rect class="${barClasses.join(' ')}" x="${x}" y="${y}" width="14" height="${height || 2}" rx="4"></rect>
-      ${point.total > 0 ? `<text class="chart-value" x="${x + 7}" y="${Math.max(14, y - 6)}" text-anchor="middle">${point.total}</text>` : ''}
-      ${label ? `<text class="chart-label ${isToday ? 'today' : ''}" x="${x + 7}" y="214" text-anchor="middle">${label}</text>` : ''}
+      <rect class="${barClasses.join(' ')}" x="${x}" y="${y}" width="${barWidth}" height="${height || 2}" rx="4"></rect>
+      ${point.total > 0 ? `<text class="chart-value" x="${x + barWidth / 2}" y="${Math.max(14, y - 6)}" text-anchor="middle">${point.total}</text>` : ''}
+      ${point.label ? `<text class="chart-label ${point.current ? 'today' : ''}" x="${x + barWidth / 2}" y="214" text-anchor="middle">${point.label}</text>` : ''}
     `;
   }).join('');
 
   const historyChart = document.getElementById('history-chart');
   historyChart.innerHTML = `
-    <p class="chart-caption">Suma powtórzeń z ostatnich 15 dni, łącznie z dzisiaj.</p>
-    <svg class="chart-svg" viewBox="0 0 360 220" role="img" aria-label="Wykres liczby powtórzeń z ostatnich 15 dni">
+    <div class="chart-toolbar" role="tablist" aria-label="Agregacja wykresu">
+      <button type="button" class="chart-toggle ${chartAggregation === 'daily' ? 'active' : ''}" data-chart-aggregation="daily" role="tab" aria-selected="${chartAggregation === 'daily'}">15 dni</button>
+      <button type="button" class="chart-toggle ${chartAggregation === 'weekly' ? 'active' : ''}" data-chart-aggregation="weekly" role="tab" aria-selected="${chartAggregation === 'weekly'}">10 tygodni</button>
+    </div>
+    <p class="chart-caption">${caption}</p>
+    <svg class="chart-svg" viewBox="0 0 360 220" role="img" aria-label="${ariaLabel}">
       <line class="chart-grid" x1="18" y1="${bottomY}" x2="350" y2="${bottomY}"></line>
       <line class="chart-grid" x1="18" y1="10" x2="18" y2="${bottomY}"></line>
       ${bars}
     </svg>
   `;
+}
+
+function buildDailyChartPoints(data, today) {
+  const points = [];
+  for (let i = 14; i >= 0; i--) {
+    const day = shiftDate(today, -i);
+    const isToday = day === today;
+    points.push({
+      day,
+      label: isToday ? 'dziś' : (i % 2 === 0 ? formatShortDate(day) : ''),
+      current: isToday,
+      total: sumReps(data[day] || [])
+    });
+  }
+  return points;
+}
+
+function buildWeeklyChartPoints(data, today) {
+  const currentWeekStart = startOfWeek(today);
+  const points = [];
+  for (let i = 9; i >= 0; i--) {
+    const weekStart = shiftDate(currentWeekStart, -i * 7);
+    const weekEnd = shiftDate(weekStart, 6);
+    const total = Array.from({ length: 7 }, (_, idx) => shiftDate(weekStart, idx))
+      .filter(day => day <= today)
+      .reduce((sum, day) => sum + sumReps(data[day] || []), 0);
+    points.push({
+      day: weekStart,
+      label: formatShortDate(weekStart),
+      current: today >= weekStart && today <= weekEnd,
+      total
+    });
+  }
+  return points;
 }
 
 function updateHistoryView() {
@@ -404,6 +467,15 @@ function attachHistoryViewHandlers() {
     tab.onclick = () => {
       historyView = tab.dataset.view;
       updateHistoryView();
+    };
+  });
+}
+
+function attachChartAggregationHandlers() {
+  document.querySelectorAll('.chart-toggle').forEach(btn => {
+    btn.onclick = () => {
+      chartAggregation = btn.dataset.chartAggregation;
+      render();
     };
   });
 }
