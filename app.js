@@ -99,6 +99,23 @@ function startOfWeek(iso) {
 const hasEntries = (data, day) =>
   Array.isArray(data[day]) && data[day].length > 0;
 
+function sumWeekReps(data, weekStart, today) {
+  return Array.from({ length: 7 }, (_, idx) => shiftDate(weekStart, idx))
+    .filter(day => day <= today)
+    .reduce((total, day) => total + sumReps(data[day] || []), 0);
+}
+
+function bestWeekReps(data, today) {
+  const weekTotals = Object.keys(data)
+    .filter(day => day <= today)
+    .reduce((totals, day) => {
+      const weekStart = startOfWeek(day);
+      totals[weekStart] = (totals[weekStart] || 0) + sumReps(data[day] || []);
+      return totals;
+    }, {});
+  return Math.max(0, ...Object.values(weekTotals));
+}
+
 
 // ============================================================
 // 3. Renderowanie wpisów i widoku
@@ -187,6 +204,8 @@ function renderSummary(data, today) {
   const firstDay = days[0];
   const dayCount = firstDay ? daysBetweenInclusive(firstDay, today) : 0;
   const dailyAverage = dayCount ? totalReps / dayCount : 0;
+  const currentWeekTotal = sumWeekReps(data, startOfWeek(today), today);
+  const bestWeekTotal = bestWeekReps(data, today);
   let currentStreak = 0;
   for (let day = today; hasEntries(data, day); day = shiftDate(day, -1)) {
     currentStreak++;
@@ -208,6 +227,14 @@ function renderSummary(data, today) {
     <div class="summary-item">
       <div class="summary-value">${currentStreak} dni</div>
       <div class="summary-label">bez przerwy</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value">${bestWeekTotal}</div>
+      <div class="summary-label">najlepszy tydzień</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value">${currentWeekTotal}</div>
+      <div class="summary-label">aktualny tydzień</div>
     </div>
   `;
 }
@@ -319,9 +346,7 @@ function buildWeeklyChartPoints(data, today) {
   for (let i = 9; i >= 0; i--) {
     const weekStart = shiftDate(currentWeekStart, -i * 7);
     const weekEnd = shiftDate(weekStart, 6);
-    const total = Array.from({ length: 7 }, (_, idx) => shiftDate(weekStart, idx))
-      .filter(day => day <= today)
-      .reduce((sum, day) => sum + sumReps(data[day] || []), 0);
+    const total = sumWeekReps(data, weekStart, today);
     points.push({
       day: weekStart,
       label: formatShortDate(weekStart),
