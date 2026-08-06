@@ -623,7 +623,7 @@ document.getElementById('export-btn').addEventListener('click', () => {
 
 
 // ============================================================
-// 8. Import CSV
+// 8. Import z CSV
 // ============================================================
 function parseCSV(text) {
   text = text.replace(/^\uFEFF/, '');
