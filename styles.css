@@ -490,7 +490,7 @@ button.primary:active {
 
 .chart-toolbar {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
   padding: 4px;
   margin-bottom: 12px;

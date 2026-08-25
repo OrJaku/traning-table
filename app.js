@@ -35,6 +35,11 @@ const formatShortDate = (iso) => {
   return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
 };
 
+const formatMonthLabel = (monthKey) => {
+  const d = new Date(monthKey + '-01T00:00:00');
+  return d.toLocaleDateString('pl-PL', { month: 'short' }).replace('.', '');
+};
+
 const escapeHtml = (s) =>
   String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -96,12 +101,24 @@ function startOfWeek(iso) {
   return d.toISOString().slice(0, 10);
 }
 
+function shiftMonth(monthKey, months) {
+  const [year, month] = monthKey.split('-').map(Number);
+  const d = new Date(Date.UTC(year, month - 1 + months, 1));
+  return d.toISOString().slice(0, 7);
+}
+
 const hasEntries = (data, day) =>
   Array.isArray(data[day]) && data[day].length > 0;
 
 function sumWeekReps(data, weekStart, today) {
   return Array.from({ length: 7 }, (_, idx) => shiftDate(weekStart, idx))
     .filter(day => day <= today)
+    .reduce((total, day) => total + sumReps(data[day] || []), 0);
+}
+
+function sumMonthReps(data, monthKey, today) {
+  return Object.keys(data)
+    .filter(day => day <= today && day.startsWith(monthKey))
     .reduce((total, day) => total + sumReps(data[day] || []), 0);
 }
 
@@ -280,21 +297,28 @@ function renderHistoryList(data, otherDays) {
 }
 
 function renderHistoryChart(data, today) {
-  const points = chartAggregation === 'weekly'
-    ? buildWeeklyChartPoints(data, today)
-    : buildDailyChartPoints(data, today);
+  const points = chartAggregation === 'monthly'
+    ? buildMonthlyChartPoints(data, today)
+    : chartAggregation === 'weekly'
+      ? buildWeeklyChartPoints(data, today)
+      : buildDailyChartPoints(data, today);
   const isWeekly = chartAggregation === 'weekly';
+  const isMonthly = chartAggregation === 'monthly';
   const caption = isWeekly
     ? `Suma powtórzeń z ostatnich ${weeklyChartRange} tygodni, razem z bieżącym tygodniem.`
+    : isMonthly
+      ? 'Suma powtórzeń z ostatnich 12 miesięcy, razem z bieżącym miesiącem.'
     : 'Suma powtórzeń z ostatnich 15 dni, łącznie z dzisiaj.';
   const ariaLabel = isWeekly
     ? `Wykres liczby powtórzeń z ostatnich ${weeklyChartRange} tygodni`
+    : isMonthly
+      ? 'Wykres liczby powtórzeń z ostatnich 12 miesięcy'
     : 'Wykres liczby powtórzeń z ostatnich 15 dni';
   const chartHeight = 180;
   const bottomY = 190;
   const drawableWidth = 318;
-  const stepX = isWeekly ? drawableWidth / points.length : 22;
-  const barWidth = isWeekly ? Math.max(3, Math.min(22, stepX - 4)) : 14;
+  const stepX = (isWeekly || isMonthly) ? drawableWidth / points.length : 22;
+  const barWidth = (isWeekly || isMonthly) ? Math.max(3, Math.min(22, stepX - 4)) : 14;
   const startX = 26;
   const maxTotal = Math.max(...points.map(point => point.total), 1);
 
@@ -317,6 +341,7 @@ function renderHistoryChart(data, today) {
     <div class="chart-toolbar" role="tablist" aria-label="Agregacja wykresu">
       <button type="button" class="chart-toggle ${chartAggregation === 'daily' ? 'active' : ''}" data-chart-aggregation="daily" role="tab" aria-selected="${chartAggregation === 'daily'}">15 dni</button>
       <button type="button" class="chart-toggle ${chartAggregation === 'weekly' ? 'active' : ''}" data-chart-aggregation="weekly" role="tab" aria-selected="${chartAggregation === 'weekly'}">Tygodnie</button>
+      <button type="button" class="chart-toggle ${chartAggregation === 'monthly' ? 'active' : ''}" data-chart-aggregation="monthly" role="tab" aria-selected="${chartAggregation === 'monthly'}">Miesiące</button>
     </div>
     ${isWeekly ? `
       <div class="chart-range" aria-label="Zakres tygodni">
@@ -361,6 +386,21 @@ function buildWeeklyChartPoints(data, today) {
       label: formatShortDate(weekStart),
       current: today >= weekStart && today <= weekEnd,
       total
+    });
+  }
+  return points;
+}
+
+function buildMonthlyChartPoints(data, today) {
+  const currentMonth = today.slice(0, 7);
+  const points = [];
+  for (let i = 11; i >= 0; i--) {
+    const monthKey = shiftMonth(currentMonth, -i);
+    points.push({
+      day: `${monthKey}-01`,
+      label: formatMonthLabel(monthKey),
+      current: monthKey === currentMonth,
+      total: sumMonthReps(data, monthKey, today)
     });
   }
   return points;
