@@ -125,6 +125,7 @@ let editingKey = null; // format: "day:idx" — który wpis jest aktualnie edyto
 let historyPage = 0;
 let historyView = 'chart';
 let chartAggregation = 'daily';
+let weeklyChartRange = 10;
 
 const entryHTML = (e, day, idx) => {
   const isToday = day === todayKey();
@@ -284,16 +285,17 @@ function renderHistoryChart(data, today) {
     : buildDailyChartPoints(data, today);
   const isWeekly = chartAggregation === 'weekly';
   const caption = isWeekly
-    ? 'Suma powtórzeń z ostatnich 10 tygodni, razem z bieżącym tygodniem.'
+    ? `Suma powtórzeń z ostatnich ${weeklyChartRange} tygodni, razem z bieżącym tygodniem.`
     : 'Suma powtórzeń z ostatnich 15 dni, łącznie z dzisiaj.';
   const ariaLabel = isWeekly
-    ? 'Wykres liczby powtórzeń z ostatnich 10 tygodni'
+    ? `Wykres liczby powtórzeń z ostatnich ${weeklyChartRange} tygodni`
     : 'Wykres liczby powtórzeń z ostatnich 15 dni';
   const chartHeight = 180;
   const bottomY = 190;
-  const stepX = isWeekly ? 32 : 22;
-  const barWidth = isWeekly ? 22 : 14;
-  const startX = isWeekly ? 26 : 26;
+  const drawableWidth = 318;
+  const stepX = isWeekly ? drawableWidth / points.length : 22;
+  const barWidth = isWeekly ? Math.max(3, Math.min(22, stepX - 4)) : 14;
+  const startX = 26;
   const maxTotal = Math.max(...points.map(point => point.total), 1);
 
   const bars = points.map((point, index) => {
@@ -314,8 +316,15 @@ function renderHistoryChart(data, today) {
   historyChart.innerHTML = `
     <div class="chart-toolbar" role="tablist" aria-label="Agregacja wykresu">
       <button type="button" class="chart-toggle ${chartAggregation === 'daily' ? 'active' : ''}" data-chart-aggregation="daily" role="tab" aria-selected="${chartAggregation === 'daily'}">15 dni</button>
-      <button type="button" class="chart-toggle ${chartAggregation === 'weekly' ? 'active' : ''}" data-chart-aggregation="weekly" role="tab" aria-selected="${chartAggregation === 'weekly'}">10 tygodni</button>
+      <button type="button" class="chart-toggle ${chartAggregation === 'weekly' ? 'active' : ''}" data-chart-aggregation="weekly" role="tab" aria-selected="${chartAggregation === 'weekly'}">Tygodnie</button>
     </div>
+    ${isWeekly ? `
+      <div class="chart-range" aria-label="Zakres tygodni">
+        ${[10, 20, 30, 50].map(range => `
+          <button type="button" class="chart-range-btn ${weeklyChartRange === range ? 'active' : ''}" data-weekly-range="${range}">${range}</button>
+        `).join('')}
+      </div>
+    ` : ''}
     <p class="chart-caption">${caption}</p>
     <svg class="chart-svg" viewBox="0 0 360 220" role="img" aria-label="${ariaLabel}">
       <line class="chart-grid" x1="18" y1="${bottomY}" x2="350" y2="${bottomY}"></line>
@@ -343,7 +352,7 @@ function buildDailyChartPoints(data, today) {
 function buildWeeklyChartPoints(data, today) {
   const currentWeekStart = startOfWeek(today);
   const points = [];
-  for (let i = 9; i >= 0; i--) {
+  for (let i = weeklyChartRange - 1; i >= 0; i--) {
     const weekStart = shiftDate(currentWeekStart, -i * 7);
     const weekEnd = shiftDate(weekStart, 6);
     const total = sumWeekReps(data, weekStart, today);
@@ -453,6 +462,7 @@ function attachEntryEventHandlers() {
       input.value = Math.max(0, safeValue + delta);
       input.focus();
     });
+    btn.addEventListener('dblclick', (e) => e.preventDefault());
   });
 
   // Rozwijanie dni w historii
@@ -503,6 +513,13 @@ function attachChartAggregationHandlers() {
       render();
     };
   });
+  document.querySelectorAll('.chart-range-btn').forEach(btn => {
+    btn.onclick = () => {
+      weeklyChartRange = parseInt(btn.dataset.weeklyRange, 10);
+      chartAggregation = 'weekly';
+      render();
+    };
+  });
 }
 
 
@@ -548,6 +565,10 @@ function adjustReps(delta) {
   repsInput.focus();
 }
 
+function preventStepZoom(btn) {
+  btn.addEventListener('dblclick', (e) => e.preventDefault());
+}
+
 segBtns.forEach(b => {
   b.addEventListener('click', () => {
     selectedExercise = b.dataset.ex;
@@ -564,6 +585,8 @@ toggleDateBtn.addEventListener('click', () => {
 entryDateInput.addEventListener('input', updateSelectedDateLabel);
 repsMinusBtn.addEventListener('click', () => adjustReps(-5));
 repsPlusBtn.addEventListener('click', () => adjustReps(5));
+preventStepZoom(repsMinusBtn);
+preventStepZoom(repsPlusBtn);
 
 
 // ============================================================

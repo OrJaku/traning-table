@@ -207,6 +207,9 @@ textarea {
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .step-btn:active {
@@ -513,6 +516,30 @@ button.primary:active {
 .chart-toggle.active {
   background: var(--ink);
   color: var(--bg);
+}
+
+.chart-range {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.chart-range-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 6px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chart-range-btn.active {
+  border-color: var(--accent);
+  color: var(--ink);
 }
 
 .chart-caption {
